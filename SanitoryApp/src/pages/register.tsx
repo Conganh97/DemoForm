@@ -16,8 +16,11 @@ import customerService from '@/services/customer-service'
 import {useToast} from '@/components/ui/use-toast'
 import IFormRegister from "@/models/FormRegister.ts";
 import {Link, useNavigate} from "react-router-dom";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
+import {useState} from "react";
 
 const formSchema = z.object({
+    isPerson: z.string(),
     organizationName: z.string(),
     identityDate: z.date(),
     identityNumber: z.string(),
@@ -70,6 +73,7 @@ const Register = () => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            isPerson: "caNhan",
             organizationName: '',
             identityNumber: '',
             identityPlace: '',
@@ -86,9 +90,16 @@ const Register = () => {
         },
     })
 
+    const [isPerson, setIsPerson] = useState("");
+
+    function handleChangeRadio(value: string) {
+        setIsPerson(value);
+    }
+
     // 2. Define a submit handler.
     function onSubmit(values: z.infer<typeof formSchema>) {
         const data: IFormRegister = {
+            isPerson: values.isPerson === "caNhan",
             cus_person: values.organizationName,
             cus_so_dk: values.identityNumber,
             cus_country_code: values.city,
@@ -112,8 +123,6 @@ const Register = () => {
             password_1_cua: values.nationalPassword
         }
 
-        console.log(data)
-
         customerService
             .create(data)
             .then((response: any) => {
@@ -129,6 +138,11 @@ const Register = () => {
             })
             .catch((e: Error) => {
                 console.log(e)
+                toast({
+                    variant: 'destructive',
+                    title: 'Thất bại',
+                    description: 'Đăng ký không thành công',
+                })
             })
     }
 
@@ -163,14 +177,47 @@ const Register = () => {
                                 ĐIỀN THÔNG TIN
                             </legend>
                             <div className="flex flex-col w-full">
+                                <FormField
+                                    control={form.control}
+                                    name="isPerson"
+                                    render={({field}) => (
+                                        <FormItem className="space-y-3" onChange={handleChangeRadio(field.value)}>
+                                            <FormControl>
+                                                <RadioGroup
+                                                    onValueChange={field.onChange}
+                                                    defaultValue="caNhan"
+                                                    className="flex flex-col space-y-1"
+                                                >
+                                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                                        <FormControl>
+                                                            <RadioGroupItem value="toChuc"/>
+                                                        </FormControl>
+                                                        <FormLabel className="font-normal">
+                                                            Tổ chức
+                                                        </FormLabel>
+                                                    </FormItem>
+                                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                                        <FormControl>
+                                                            <RadioGroupItem value="caNhan"/>
+                                                        </FormControl>
+                                                        <FormLabel className="font-normal">Cá nhân</FormLabel>
+                                                    </FormItem>
+                                                </RadioGroup>
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}></FormField>
+                                <br/>
                                 <div className="flex">
+
                                     <div className="basis-1/3 mr-3">
                                         <FormField
                                             control={form.control}
                                             name="organizationName"
                                             render={({field}) => (
                                                 <FormItem>
-                                                    <FormLabel>Tên tổ chức</FormLabel>
+                                                    {isPerson === "caNhan" && <FormLabel>Tên cá nhân</FormLabel>}
+                                                    {isPerson === "toChuc" && <FormLabel>Tên tổ chức</FormLabel>}
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
@@ -207,13 +254,17 @@ const Register = () => {
                                             name="identityNumber"
                                             render={({field}) => (
                                                 <FormItem>
-                                                    <FormLabel>Số CMT / Căn cước </FormLabel>
+                                                    {isPerson === "caNhan" &&
+                                                        <FormLabel>Số CMT / Căn cước </FormLabel>}
+
+                                                    {isPerson === "toChuc" && <FormLabel>Mã số thuế </FormLabel>}
                                                     <abbr title="required" className="text-red-500">
                                                         *
                                                     </abbr>
                                                     <FormControl>
-                                                        <Input {...field} />
+                                                        <Input type="number" pattern={"^[0-9]{12}"} {...field} />
                                                     </FormControl>
+
                                                     <FormMessage/>
                                                 </FormItem>
                                             )}

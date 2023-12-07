@@ -1,4 +1,5 @@
 export default interface IFormRegister {
+    isPerson: boolean
     lon_login_name: string
     lon_login_password: string
     confirm_password: string

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.SqlTypes;
 using Contracts.Interfaces;
 using Dapper;
 using MediatR;
@@ -7,6 +8,7 @@ namespace Application.Features.Customers.Command
 {
     public class RegisterCommand : IRequest<Guid>
     {
+        public bool isPerson { get; set; }
         public string cus_person { get; set; }
         public string cus_so_dk { get; set; }
         public string cus_country_code { get; set; }
@@ -41,13 +43,17 @@ namespace Application.Features.Customers.Command
             public async Task<Guid> Handle(RegisterCommand request, CancellationToken cancellationToken)
             {
                 var queryUser =
-                    "INSERT INTO [USER] (LON_USER_NAME, LON_LOGIN_PASSWORD,LON_LOGIN_NAME, THUTUC,ACCOUNT1CUA,PASSWORD1CUA) " +
-                    "VALUES (@LON_User_Name, @LON_Login_Password,@LON_Login_Name,@Thu_Tuc,@Account_1_Cua,@Password_1_Cua) " +
+                    "INSERT INTO [USER] (LON_USER_NAME, LON_LOGIN_PASSWORD,LON_LOGIN_NAME,THUTUC,ACCOUNT1CUA,PASSWORD1CUA," +
+                    "LON_TYPE,LON_STATUS,LON_MAIL,LON_CELLPHONE,LON_ADDRESS,LON_ISCUSTOMER) " +
+                    "VALUES (@LON_User_Name, @LON_Login_Password,@LON_Login_Name,@Thu_Tuc,@Account_1_Cua,@Password_1_Cua,@Lon_type," +
+                    "@Lon_status,@cus_email,@cus_tel,@cus_address,@is_customer) " +
                     "INSERT INTO [Customer] (CustomerCode,CUS_Person, CUS_SoDK, CUS_CountryCode, CUS_NgayCap, CUS_NoiCap, " +
                     "NguoiDaiDien, ChucVu, CUS_TenChuHang, CUS_DiaChi, CustomerName, CUS_Address,CUS_Tel,CUS_Email,CUS_Fax,EmailHoaDon) " +
                     "VALUES (@CustomerCode,@cus_person, @cus_sodk, @cus_countrycode, @cus_ngaycap, @cus_noicap, @nguoidaidien, @chucvu, " +
-                    "@cus_tenchuhang, @cus_diachi, @customername, @cus_address,@cus_tel,@cus_email,@cus_fax,@emailhoadon)";
-                
+                    "@cus_tenchuhang, @cus_diachi, @customername, @cus_address,@cus_tel,@cus_email,@cus_fax,@emailhoadon) " +
+                    "INSERT INTO [USERATTACH] (UATTACHID,USERID,CUSTOMERID,ISCUSTOMER)" +
+                    "VALUES(@UATTACHID,@LON_User_Name,@CustomerCode,@is_customer)";
+
                 var parameters = new DynamicParameters();
                 parameters.Add("LON_User_Name", request.lon_login_name, DbType.String);
                 parameters.Add("LON_Login_Password", request.lon_login_password, DbType.String);
@@ -55,8 +61,12 @@ namespace Application.Features.Customers.Command
                 parameters.Add("Thu_Tuc", request.thu_tuc, DbType.String);
                 parameters.Add("Account_1_Cua", request.account_1_cua, DbType.String);
                 parameters.Add("Password_1_cua", request.password_1_cua, DbType.String);
-                parameters.Add("CustomerCode",new Random().NextInt64().ToString());
-                parameters.Add("cus_person", request.cus_person != null, DbType.Boolean);
+                parameters.Add("Lon_type", "Basic", DbType.String);
+                parameters.Add("Lon_status", "New", DbType.String);
+                parameters.Add("is_customer", new SqlBoolean(true), DbType.Boolean);
+                parameters.Add("CustomerCode", new Random().NextInt64().ToString());
+                parameters.Add("UATTACHID", "HACH" + new Random().Next());
+                parameters.Add("cus_person", request.isPerson, DbType.Boolean);
                 parameters.Add("cus_sodk", request.cus_so_dk, DbType.String);
                 parameters.Add("cus_countrycode", request.cus_country_code, DbType.String);
                 parameters.Add("cus_ngaycap", request.cus_ngay_cap, DbType.String);
@@ -71,7 +81,7 @@ namespace Application.Features.Customers.Command
                 parameters.Add("cus_email", request.cus_email, DbType.String);
                 parameters.Add("cus_fax", request.cus_fax, DbType.String);
                 parameters.Add("emailhoadon", request.email_hoa_don, DbType.String);
-                
+
                 await _writeDbConnection.ExecuteAsync(queryUser, parameters);
                 return new Guid();
             }
