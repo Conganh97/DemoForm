@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "..\API\API.csproj", "{C7C0281C-2C90-4075-A2F3-A055F25CE12D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "..\Infrastructure\Infrastructure.csproj", "{E58520A9-BBD4-42B3-B802-EA8169694AD8}"
@@ -8,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Common.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts", "..\Contracts\Contracts.csproj", "{6D370E7B-5F2F-4356-8E6A-131EDB6815A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "..\Application\Application.csproj", "{F1E9D481-1272-4E59-ADE1-C29C0BB62FDA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "..\Application\Application.csproj", "{C53D2D40-C359-47FC-97CE-C084CC6B3EF2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,9 +33,9 @@ Global
 		{6D370E7B-5F2F-4356-8E6A-131EDB6815A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D370E7B-5F2F-4356-8E6A-131EDB6815A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D370E7B-5F2F-4356-8E6A-131EDB6815A2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F1E9D481-1272-4E59-ADE1-C29C0BB62FDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F1E9D481-1272-4E59-ADE1-C29C0BB62FDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F1E9D481-1272-4E59-ADE1-C29C0BB62FDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F1E9D481-1272-4E59-ADE1-C29C0BB62FDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C53D2D40-C359-47FC-97CE-C084CC6B3EF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C53D2D40-C359-47FC-97CE-C084CC6B3EF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C53D2D40-C359-47FC-97CE-C084CC6B3EF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C53D2D40-C359-47FC-97CE-C084CC6B3EF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
