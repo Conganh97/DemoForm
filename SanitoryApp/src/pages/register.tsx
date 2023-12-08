@@ -1,6 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
 import {
   Form,
   FormControl,
@@ -8,38 +8,103 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Combobox } from "@/components/ui/combobox";
-import { CalendarIcon, StepBackIcon, UserPlus2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/form'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Combobox } from '@/components/ui/combobox'
+import { CalendarIcon, StepBackIcon, UserPlus2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { formatDate } from "@/lib/format";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import customerService from "@/services/customer-service";
-import { useToast } from "@/components/ui/use-toast";
-import IFormRegister from "@/models/FormRegister.ts";
-import { Link, useNavigate } from "react-router-dom";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useState } from "react";
-import { log } from "console";
+} from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { formatDate } from '@/lib/format'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import customerService from '@/services/customer-service'
+import { useToast } from '@/components/ui/use-toast'
+import IFormRegister from '@/models/FormRegister.ts'
+import { Link, useNavigate } from 'react-router-dom'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useState } from 'react'
+import { log } from 'console'
 
-const regexCaNhan = "/^[0-9]{10}$/";
-const regexToChuc = "/[0-9]{10}/";
+const regexCaNhan = '/^[0-9]{10}$/'
+const regexToChuc = '/[0-9]{10}/'
 
 const formSchema = z.object({
   isPerson: z.string(),
   organizationName: z.string(),
   identityDate: z.date(),
-  identityNumberCaNhan: z.string(),
-  identityNumberToChuc: z.string(),
+  // identityNumberCaNhan: z.array(z.string().min(10)),
+  // identityNumberCaNhan: z.string().refine(
+  //   (v) => {
+  //     let n = Number(v)
+  //     return !isNaN(n) && v?.length > 0
+  //   },
+  //   { message: 'Invalid number' },
+  // ),
+  identityNumberCaNhan: z
+    .number()
+    .or(
+      z
+        .string()
+        .regex(/\d+/, { message: 'Chỉ được nhập số' })
+        .transform(Number),
+    )
+    .refine(
+      (n) =>
+        (n >= 100000000000 && n <= 999999999999) ||
+        (n >= 100000000 && n <= 999999999),
+      { message: 'Số CMT / Căn cước chỉ cho phép 9 hoặc 12 số' },
+    )
+    .optional(),
+
+  identityNumberToChuc: z
+    .number()
+    .or(
+      z
+        .string()
+        .regex(/\d+/, { message: 'Chỉ được nhập số' })
+        .transform(Number),
+    )
+    .refine(
+      (n) =>
+        (n >= 1000000000000 && n <= 9999999999999) ||
+        (n >= 1000000000 && n <= 9999999999),
+      { message: 'Mã số thuế chỉ cho phép 10 hoặc 13 số' },
+    )
+    .optional(),
+  // identityForm: z
+  //   .object({
+  //     identityNumber1: z
+  //       .string()
+  //       .refine((val) => !Number.isNaN(parseInt(val, 10)), {
+  //         message: 'Chỉ được nhập số',
+  //       }),
+  //     isPerson1: z.string(),
+  //   })
+  //   .superRefine((val, ctx) => {
+  //     if (val.isPerson1 == 'caNhan') {
+  //       ctx.addIssue({
+  //         code: z.ZodIssueCode.too_big,
+  //         maximum: 3,
+  //         type: 'array',
+  //         inclusive: true,
+  //         message: 'Too many items 😡',
+  //       })
+  //     } else {
+  //       ctx.addIssue({
+  //         code: z.ZodIssueCode.too_big,
+  //         maximum: 4,
+  //         type: 'array',
+  //         inclusive: true,
+  //         message: 'Too many items123123 😡',
+  //       })
+  //     }
+  //   }),
   identityPlace: z.string(),
   city: z.string(),
   rePresentativeName: z.string(),
@@ -58,64 +123,69 @@ const formSchema = z.object({
   nationalAccountName: z.string(),
   nationalPassword: z.string(),
   items: z.string(),
-});
+})
 
 const Register = () => {
-  const { toast } = useToast();
+  const { toast } = useToast()
   const options = [
-    { label: "Hà Nội", value: "0" },
-    { label: "Hải Phòng", value: "1" },
-    { label: "Thành phố Hồ Chí Minh", value: "2" },
-    { label: "Đà Nẵng", value: "3" },
-  ];
+    { label: 'Hà Nội', value: '0' },
+    { label: 'Hải Phòng', value: '1' },
+    { label: 'Thành phố Hồ Chí Minh', value: '2' },
+    { label: 'Đà Nẵng', value: '3' },
+  ]
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const items = [
     {
-      id: "import",
-      label: "Kiểm dịch thực vật nhập khẩu",
+      id: 'import',
+      label: 'Kiểm dịch thực vật nhập khẩu',
     },
     {
-      id: "export",
-      label: "Kiểm dịch thực vật xuất khẩu, tái xuất",
+      id: 'export',
+      label: 'Kiểm dịch thực vật xuất khẩu, tái xuất',
     },
-  ] as const;
+  ] as const
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      isPerson: "caNhan",
-      organizationName: "",
-      identityPlace: "",
-      identityDate: new Date("1900-01-01"),
-      city: "",
-      engAddress: "",
-      engName: "",
-      fax: "",
-      emailReceipt: "",
-      nationalAccountName: "",
-      nationalPassword: "",
-      items: "NK",
+      isPerson: 'caNhan',
+      organizationName: '',
+      identityPlace: '',
+      identityDate: new Date('1900-01-01'),
+      city: '',
+      engAddress: '',
+      engName: '',
+      fax: '',
+      emailReceipt: '',
+      nationalAccountName: '',
+      nationalPassword: '',
+      items: 'NK',
     },
-  });
+  })
 
-  const [isPerson, setIsPerson] = useState("");
+  const [isPerson, setIsPerson] = useState('')
 
   function handleChangeRadio(value: string) {
-    setIsPerson(value);
+    console.log(value)
+    setIsPerson(value)
+  }
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    console.log(event?.target?.value)
   }
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     const data: IFormRegister = {
-      isPerson: values.isPerson === "caNhan",
+      isPerson: values.isPerson === 'caNhan',
       cus_person: values.organizationName,
       cus_so_dk:
-        values.isPerson === "caNhan"
-          ? values.identityNumberCaNhan
-          : values.identityNumberToChuc,
+        values.isPerson === 'caNhan'
+          ? values.identityNumberCaNhan?.toString()
+          : values.identityNumberToChuc?.toString(),
+      // cus_so_dk: values.identityForm,
       cus_country_code: values.city,
       cus_ngay_cap: values.identityDate,
       cus_noi_cap: values.identityPlace,
@@ -135,29 +205,29 @@ const Register = () => {
       thu_tuc: values.items,
       account_1_cua: values.nationalAccountName,
       password_1_cua: values.nationalPassword,
-    };
-    console.log(data);
+    }
+    console.log(data)
     customerService
       .create(data)
       .then((response: any) => {
         if (response.data) {
           toast({
-            variant: "destructive",
-            title: "Thành công",
-            description: "Đăng kí tài khoản thành công",
-          });
-          form.reset();
-          navigate("/");
+            variant: 'destructive',
+            title: 'Thành công',
+            description: 'Đăng kí tài khoản thành công',
+          })
+          form.reset()
+          navigate('/')
         }
       })
       .catch((e: Error) => {
-        console.log(e);
+        console.log(e)
         toast({
-          variant: "destructive",
-          title: "Thất bại",
-          description: "Đăng ký không thành công",
-        });
-      });
+          variant: 'destructive',
+          title: 'Thất bại',
+          description: 'Đăng ký không thành công',
+        })
+      })
   }
 
   return (
@@ -169,7 +239,7 @@ const Register = () => {
     >
       <div className="max-w-3xl w-full p-10 bg-white rounded-xl shadow-lg z-10 m-auto flex flex-col mt-8 mb-8">
         <h2 className="font-semibold text-lg text-center">
-          PQS - Đăng ký tài khoản {"("}Tổ chức / cá nhân{")"}
+          PQS - Đăng ký tài khoản {'('}Tổ chức / cá nhân{')'}
         </h2>
         <div className="flex text-sm italic text-red-500 mt-4">
           <p>Ghi chú:</p>
@@ -179,8 +249,8 @@ const Register = () => {
               0912471508
             </p>
             <p>
-              - Đăng ký tài khoản cá nhân dưới danh nghĩa tổ chức {"("}công ty,
-              doanh nghiệp{")"} sẽ bị khoá tài khoản
+              - Đăng ký tài khoản cá nhân dưới danh nghĩa tổ chức {'('}công ty,
+              doanh nghiệp{')'} sẽ bị khoá tài khoản
             </p>
             <div></div>
           </div>
@@ -198,7 +268,7 @@ const Register = () => {
                   render={({ field }) => (
                     <FormItem
                       className="space-y-3"
-                      onChange={handleChangeRadio(field.value)}
+                      onChange={() => handleChangeRadio(field.value)}
                     >
                       <FormControl>
                         <RadioGroup
@@ -236,11 +306,10 @@ const Register = () => {
                       name="organizationName"
                       render={({ field }) => (
                         <FormItem>
-                          {isPerson === "caNhan" && (
-                            <FormLabel>Tên cá nhân </FormLabel>
-                          )}
-                          {isPerson === "toChuc" && (
+                          {isPerson === 'caNhan' ? (
                             <FormLabel>Tên tổ chức </FormLabel>
+                          ) : (
+                            <FormLabel>Tên cá nhân </FormLabel>
                           )}
                           <abbr title="required" className="text-red-500">
                             *
@@ -274,22 +343,7 @@ const Register = () => {
                 </div>
                 <div className="flex flex-row mt-2">
                   <div className="basis-1/3 mr-3">
-                    {isPerson === "caNhan" ? (
-                      <FormField
-                        control={form.control}
-                        name="identityNumberCaNhan"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Số CMT / Căn cước </FormLabel>
-                            <FormControl>
-                              <Input type="text" {...field} />
-                            </FormControl>
-
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    ) : (
+                    {isPerson === 'caNhan' ? (
                       <FormField
                         control={form.control}
                         name="identityNumberToChuc"
@@ -299,7 +353,20 @@ const Register = () => {
                             <FormControl>
                               <Input type="text" {...field} />
                             </FormControl>
-
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="identityNumberCaNhan"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Số CMT / Căn cước </FormLabel>
+                            <FormControl>
+                              <Input type="text" {...field} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -317,14 +384,14 @@ const Register = () => {
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
-                                  variant={"outline"}
+                                  variant={'outline'}
                                   className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
+                                    'w-full pl-3 text-left font-normal',
+                                    !field.value && 'text-muted-foreground',
                                   )}
                                 >
-                                  {field.value != new Date("1900-01-01") ? (
-                                    formatDate(field.value, "en-GB")
+                                  {field.value != new Date('1900-01-01') ? (
+                                    formatDate(field.value, 'en-GB')
                                   ) : (
                                     <span>Chọn ngày</span>
                                   )}
@@ -342,7 +409,7 @@ const Register = () => {
                                 onSelect={field.onChange}
                                 disabled={(date) =>
                                   date > new Date() ||
-                                  date < new Date("1900-01-01")
+                                  date < new Date('1900-01-01')
                                 }
                                 initialFocus
                               />
@@ -355,7 +422,7 @@ const Register = () => {
                     />
                   </div>
                   <div className="basis-1/3">
-                    {" "}
+                    {' '}
                     <FormField
                       control={form.control}
                       name="identityPlace"
@@ -389,7 +456,7 @@ const Register = () => {
                       name="rePresentativeName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>
+                          <FormLabel className={cn('mr-1')}>
                             Người đại diện pháp luật
                           </FormLabel>
                           <abbr title="required" className="text-red-500">
@@ -409,7 +476,7 @@ const Register = () => {
                       name="roles"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>Chức vụ</FormLabel>
+                          <FormLabel className={cn('mr-1')}>Chức vụ</FormLabel>
                           <abbr title="required" className="text-red-500">
                             *
                           </abbr>
@@ -428,7 +495,7 @@ const Register = () => {
                     name="perOrgName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={cn("mr-1")}>
+                        <FormLabel className={cn('mr-1')}>
                           Tên tổ chức / cá nhân
                         </FormLabel>
                         <abbr title="required" className="text-red-500">
@@ -448,7 +515,7 @@ const Register = () => {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={cn("mr-1")}>Địa chỉ</FormLabel>
+                        <FormLabel className={cn('mr-1')}>Địa chỉ</FormLabel>
                         <abbr title="required" className="text-red-500">
                           *
                         </abbr>
@@ -498,7 +565,7 @@ const Register = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>
+                          <FormLabel className={cn('mr-1')}>
                             Điện thoại
                           </FormLabel>
                           <abbr title="required" className="text-red-500">
@@ -536,7 +603,7 @@ const Register = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>
+                          <FormLabel className={cn('mr-1')}>
                             Email đăng ký
                           </FormLabel>
                           <abbr title="required" className="text-red-500">
@@ -580,7 +647,7 @@ const Register = () => {
                     name="accountName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={cn("mr-1")}>
+                        <FormLabel className={cn('mr-1')}>
                           Tên tài khoản
                         </FormLabel>
                         <abbr title="required" className="text-red-500">
@@ -603,14 +670,14 @@ const Register = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>
-                            Mật khẩu{" "}
+                          <FormLabel className={cn('mr-1')}>
+                            Mật khẩu{' '}
                           </FormLabel>
                           <abbr title="required" className="text-red-500">
                             *
                           </abbr>
                           <FormControl>
-                            <Input type={"password"} {...field} />
+                            <Input type={'password'} {...field} />
                           </FormControl>
 
                           <FormMessage />
@@ -624,14 +691,14 @@ const Register = () => {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>
+                          <FormLabel className={cn('mr-1')}>
                             Nhập lại mật khẩu
                           </FormLabel>
                           <abbr title="required" className="text-red-500">
                             *
                           </abbr>
                           <FormControl>
-                            <Input type={"password"} {...field} />
+                            <Input type={'password'} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -695,7 +762,7 @@ const Register = () => {
                       name="nationalAccountName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className={cn("mr-1")}>
+                          <FormLabel className={cn('mr-1')}>
                             Tên đăng nhập
                           </FormLabel>
                           <FormControl>
@@ -713,11 +780,11 @@ const Register = () => {
                         name="nationalPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className={cn("mr-1")}>
+                            <FormLabel className={cn('mr-1')}>
                               Mật khẩu
                             </FormLabel>
                             <FormControl>
-                              <Input type={"password"} {...field} />
+                              <Input type={'password'} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -756,7 +823,7 @@ const Register = () => {
         </Form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Register;
+export default Register
